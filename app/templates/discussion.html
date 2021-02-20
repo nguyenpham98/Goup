@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container">
+
+    <form method="POST" action="" enctype="multipart/form-data">
+        {{ wtf.quick_form(post_form) }}
+    </form>
+    <br>
+
+
+    {% for post in posts %}
+    <hr>
+    <img src="{{ avatars.default(size='s') }}">&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}<br><br>
+        &emsp;{{post.body}}
+        <br>
+        {% for photo in photos %}
+            {% if post.id == photo.post.id %}
+                <img src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}">
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    <br>
+
+
+</div>
+{% endblock %}
