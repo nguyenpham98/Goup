@@ -2,7 +2,7 @@ from app import app, db, images
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm
 from app.models import User, Post, Photo
 import os
 from app.email import send_password_reset_email
@@ -90,27 +90,34 @@ def edit_profile():
         form.about_me.data=current_user.about_me
     return render_template('edit_profile.html', title='Edit Profile', form=form)
 
+
+
+
 @app.route('/discussion', methods=['GET','POST'])
 @login_required
 def discussion():
     post_form=PostForm()
 
     if post_form.post_submit.data and post_form.validate_on_submit():
-        post = Post(body=post_form.post.data, author=current_user)
-        if request.files['files'].filename!='': # photo is optional. Check if file requested in form is not blank
-            for file in post_form.files.data:
-                try:
-                    filename = images.save(file)
-                    photo = Photo(filename=filename, post=post)
-                    db.session.add(photo)
-                except UploadNotAllowed:
-                    flash('File Format Not Allowed.')
-                    return redirect(url_for('discussion'))
+        if not (request.files['files'].filename!='' or post_form.post.data):
+            flash('At least one field must have a value.')
+            return redirect(url_for('discussion'))
+        else:
+            post = Post(body=post_form.post.data, author=current_user)
+            if request.files['files'].filename!='': # photo is optional. Check if file requested in form is not blank
+                for file in post_form.files.data:
+                    try:
+                        filename = images.save(file)
+                        photo = Photo(filename=filename, post=post)
+                        db.session.add(photo)
+                    except UploadNotAllowed:
+                        flash('File Format Not Allowed.')
+                        return redirect(url_for('discussion'))
 
-        db.session.add(post)
-        db.session.commit()
-        flash('Your post is now live!')
-        return redirect(url_for('discussion'))
+            db.session.add(post)
+            db.session.commit()
+            flash('Your post is now live!')
+            return redirect(url_for('discussion'))
 
     posts = Post.query.order_by(Post.timestamp.desc()).all()
     photos = Photo.query.order_by(Photo.timestamp.desc()).all()
@@ -118,10 +125,33 @@ def discussion():
 
     return render_template('discussion.html', posts=posts, post_form=post_form, photos=photos)
 
-@app.route('/media')
+@app.route('/media', methods=['GET','POST'])
 @login_required
 def media():
-    return ''
+    # fix photo upload form in media
+    post_form = PostForm()
+    if post_form.validate_on_submit():
+        if not (request.files['files'].filename!='' or post_form.post.data):
+            flash('At least one field must have a value.')
+            return redirect(url_for('media'))
+        else:
+            post = Post(author=current_user)
+            for file in post_form.files.data:
+                try:
+                    filename = images.save(file)
+                    photo = Photo(filename=filename, post=post)
+                    db.session.add(photo)
+                    db.session.commit()
+                    flash('Photo(s) Uploaded')
+                    return redirect(url_for('media'))
+                except UploadNotAllowed:
+                    flash('File Format Not Allowed.')
+                    return redirect(url_for('media'))
+
+    photos = Photo.query.order_by(Photo.timestamp.desc()).all()
+    user = User.query.filter_by(username=current_user.username).first()
+
+    return render_template('media.html', post_form=post_form, photos=photos, user=user)
 
 @app.route('/members')
 @login_required

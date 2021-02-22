@@ -17,8 +17,9 @@
 
         {% for photo in photos %}
             {% if post.id == photo.post.id %}
-    <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"></a><br>
-
+    <div class="container" align="center">
+        <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="350" ></a><br>
+    </div>
             {% endif %}
 
         {% endfor %}

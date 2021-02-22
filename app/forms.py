@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, MultipleFileField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, MultipleFileField, FileField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from app.models import User, Post, Photo
 
@@ -42,8 +42,12 @@ class EditProfileForm(FlaskForm):
             if user is not None:
                 raise ValidationError('This username is used already. Please choose a different username.')
 
+class EditProfilePictureForm(FlaskForm):
+    photo = FileField('Change Profile Picture', validators=[DataRequired()])
+    edit_submit = SubmitField('Change')
+
 class PostForm(FlaskForm):
-    post = TextAreaField("What's on your mind?", validators=[DataRequired(), Length(min=1, max=1000)])
+    post = TextAreaField("What's on your mind?", validators=[Optional(), Length(max=1000)])
     files = MultipleFileField('Upload Photos', validators=[Optional()])
     post_submit = SubmitField('Post')
 
