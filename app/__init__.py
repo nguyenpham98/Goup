@@ -11,6 +11,7 @@ from flask_mail import Mail
 from flask_moment import Moment
 from flask_uploads import configure_uploads, IMAGES, UploadSet, UploadNotAllowed
 from sqlalchemy import MetaData
+from flask_images import Images
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -20,6 +21,7 @@ configure_uploads(app,images)
 
 bootstrap = Bootstrap(app)
 
+images = Images(app)
 
 db = SQLAlchemy(app)
 

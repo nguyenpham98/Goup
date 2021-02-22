@@ -17,7 +17,7 @@
         <br>
         {% for photo in photos %}
             {% if post.id == photo.post.id %}
-                <img src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}">
+                <img src="{{ resized_img_src(url_for('static', filename='uploads/images/'+ photo.filename), width=400, height=300) }}">
             {% endif %}
         {% endfor %}
     {% endfor %}

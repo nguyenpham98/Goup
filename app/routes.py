@@ -68,14 +68,12 @@ def register():
 @login_required
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    # paginate
-    page = request.args.get('page', 1, type=int)
-    posts = Post.query.filter_by(user_id=user.id).order_by(Post.timestamp.desc()).paginate(page=page, per_page=app.config['POSTS_PER_PAGE'])
-    # navigation
-    next_url = url_for('profile', username=user.username, page=posts.next_num) if posts.has_next else None
-    prev_url = url_for('profile', username=user.username, page=posts.prev_num) if posts.has_prev else None
 
-    return render_template('user.html', user=user, posts=posts.items, next_url=next_url, prev_url=prev_url)
+    posts = Post.query.filter_by(user_id=user.id).order_by(Post.timestamp.desc()).all()
+
+    photos = Photo.query.all()
+
+    return render_template('user.html', user=user, posts=posts, photos=photos)
 
 @app.route('/edit_profile', methods=['POST','GET'])
 @login_required
