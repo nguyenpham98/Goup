@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+
+<div class="container">
+
+    <h1>{{title}}</h1>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+        {{ wtf.quick_form(edit_profile_picture_form) }}
+    </form>
+
+    <div class="container" align="center">
+        <a href="{{ url_for('static', filename='uploads/images/'+current_user.profile_picture) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+current_user.profile_picture) }}" width="350"></a><br>
+    </div>
+
+
+</div>
+
+{% endblock %}

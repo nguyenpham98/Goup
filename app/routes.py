@@ -1,4 +1,4 @@
-from app import app, db, images
+from app import app, db, images, avatars
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
@@ -58,6 +58,9 @@ def register():
     if form.validate_on_submit():
         user = User(username=form.username.data, email=form.email.data)
         user.set_password(form.password.data)
+        # set user.profile_picture to something...
+        user.profile_picture = 'defaults/default.jpg'
+
         db.session.add(user)
         db.session.commit()
         flash('You are now a register user!')
@@ -78,7 +81,6 @@ def profile(username):
 @app.route('/edit_profile', methods=['POST','GET'])
 @login_required
 def edit_profile():
-
     form = EditProfileForm(current_user.username)
     if form.validate_on_submit():
         current_user.username = form.username.data
@@ -90,8 +92,28 @@ def edit_profile():
         form.about_me.data=current_user.about_me
     return render_template('edit_profile.html', title='Edit Profile', form=form)
 
+@app.route('/edit_profile_picture', methods=['GET', 'POST'])
+@login_required
+def edit_profile_picture():
+    edit_profile_picture_form = EditProfilePictureForm()
+    if edit_profile_picture_form.validate_on_submit():
 
+        post = Post(body='Profile Picture Changed',author=current_user)
+        try:
+            filename = images.save(edit_profile_picture_form.photo.data, folder='profile/'+current_user.username)
+            current_user.profile_picture = filename
+            photo = Photo(filename=filename, post=post)
+            db.session.add(photo)
+        except UploadNotAllowed:
+            flash('File Format Not Allowed.')
+            return redirect(url_for('profile', username=current_user.username))
+        db.session.commit()
+        flash('Profile Picture Changed')
+        return redirect(url_for('profile', username=current_user.username))
+    elif request.method == 'GET':
+        edit_profile_picture_form.photo.data = current_user.profile_picture
 
+    return render_template('edit_profile_picture.html', title='Edit Profile Picture', edit_profile_picture_form=edit_profile_picture_form)
 
 @app.route('/discussion', methods=['GET','POST'])
 @login_required
@@ -119,7 +141,7 @@ def discussion():
             flash('Your post is now live!')
             return redirect(url_for('discussion'))
 
-    posts = Post.query.order_by(Post.timestamp.desc()).all()
+    posts = Post.query.filter(Post.body != 'Profile Picture Changed').order_by(Post.timestamp.desc()).all()
     photos = Photo.query.order_by(Photo.timestamp.desc()).all()
 
 

@@ -12,7 +12,8 @@
 
     {% for post in posts %}
     <hr>
-    <img src="{{ avatars.default(size='s') }}">&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}<br><br>
+
+    <img src="{{ url_for('static', filename='uploads/images/'+post.author.profile_picture)  }}">&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}<br><br>
         &emsp;{{post.body}}
 
         {% for photo in photos %}
