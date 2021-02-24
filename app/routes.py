@@ -21,8 +21,7 @@ def verified_required(f):
     def decorated_function(*args, **kwargs):
         if current_user.verified != 1:
             flash('You are not a verified user yet.')
-            verification_form=VerificationForm()
-            return render_template('verification.html', verification_form=verification_form)
+            return redirect(url_for('verification'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -208,9 +207,6 @@ def verification():
         else:
             flash('Wrong answer. Please answer again.')
         return redirect(url_for('verification'))
-
-
-
     return render_template('verification.html', title='Verification',verification_form=verification_form)
 
 @app.route('/favicon.ico')
