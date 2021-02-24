@@ -102,7 +102,7 @@ def edit_profile_picture():
         try:
             filename = images.save(edit_profile_picture_form.photo.data, folder='profile/'+current_user.username)
             current_user.profile_picture = filename
-            photo = Photo(filename=filename, post=post)
+            photo = Photo(filename=filename, post=post, public=0)
             db.session.add(photo)
         except UploadNotAllowed:
             flash('File Format Not Allowed.')
@@ -130,7 +130,7 @@ def discussion():
                 for file in post_form.files.data:
                     try:
                         filename = images.save(file)
-                        photo = Photo(filename=filename, post=post)
+                        photo = Photo(filename=filename, post=post, public=1)
                         db.session.add(photo)
                     except UploadNotAllowed:
                         flash('File Format Not Allowed.')
@@ -142,7 +142,7 @@ def discussion():
             return redirect(url_for('discussion'))
 
     posts = Post.query.filter(Post.body != 'Profile Picture Changed').order_by(Post.timestamp.desc()).all()
-    photos = Photo.query.order_by(Photo.timestamp.desc()).all()
+    photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
 
 
     return render_template('discussion.html', posts=posts, post_form=post_form, photos=photos)
@@ -157,11 +157,11 @@ def media():
             flash('At least one field must have a value.')
             return redirect(url_for('media'))
         else:
-            post = Post(author=current_user)
+            post = Post(body='',author=current_user)
             for file in post_form.files.data:
                 try:
                     filename = images.save(file)
-                    photo = Photo(filename=filename, post=post)
+                    photo = Photo(filename=filename, post=post, public=1)
                     db.session.add(photo)
                     db.session.commit()
                     flash('Photo(s) Uploaded')
@@ -170,11 +170,7 @@ def media():
                     flash('File Format Not Allowed.')
                     return redirect(url_for('media'))
 
-    photos = Photo.query.order_by(Photo.timestamp.desc()).all()
-
-    print(photos)
-
-
+    photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
     return render_template('media.html', post_form=post_form, photos=photos)
 
 @app.route('/members')

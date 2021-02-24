@@ -58,6 +58,7 @@ class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(140), index=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    public = db.Column(db.Integer, index=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
 
     def __repr__(self):

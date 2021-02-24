@@ -13,8 +13,8 @@
     {% for post in posts %}
     <hr>
 
-    <a href="{{url_for('profile', username=post.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+post.author.profile_picture)  }}" class="img-responsive" width="128" style="display:inline;"></a>&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}<br><br>
-        &emsp;<p style="display:inline;">{{post.body}}</p>
+    <a href="{{url_for('profile', username=post.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+post.author.profile_picture)  }}" class="img-responsive" width="90" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}</h4><br><br>
+        &emsp;<p>{{post.body}}</p>
 
         {% for photo in photos %}
             {% if post.id == photo.post.id %}
