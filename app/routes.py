@@ -2,12 +2,13 @@ from app import app, db, images, avatars
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm
 from app.models import User, Post, Photo
 import os
 from app.email import send_password_reset_email
 from datetime import datetime
 from flask_uploads import UploadNotAllowed
+from functools import wraps
 
 @app.before_request # insert code before view function
 def before_request():
@@ -15,13 +16,24 @@ def before_request():
         current_user.last_seen = datetime.utcnow() # update the time
         db.session.commit()
 
+def verified_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.verified != 1:
+            flash('You are not a verified user yet.')
+            verification_form=VerificationForm()
+            return render_template('verification.html', verification_form=verification_form)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    return render_template('about.html', title='About')
 
 @app.route('/login', methods=['GET','POST'])
 def login():
@@ -76,7 +88,7 @@ def profile(username):
 
     photos = Photo.query.all()
 
-    return render_template('user.html', user=user, posts=posts, photos=photos)
+    return render_template('user.html', title=username, user=user, posts=posts, photos=photos)
 
 @app.route('/edit_profile', methods=['POST','GET'])
 @login_required
@@ -117,6 +129,7 @@ def edit_profile_picture():
 
 @app.route('/discussion', methods=['GET','POST'])
 @login_required
+@verified_required
 def discussion():
     post_form=PostForm()
 
@@ -145,10 +158,11 @@ def discussion():
     photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
 
 
-    return render_template('discussion.html', posts=posts, post_form=post_form, photos=photos)
+    return render_template('discussion.html', title='Discussion', posts=posts, post_form=post_form, photos=photos)
 
 @app.route('/media', methods=['GET','POST'])
 @login_required
+@verified_required
 def media():
     # fix display to not show profile pictures
     post_form = PostForm()
@@ -171,12 +185,33 @@ def media():
                     return redirect(url_for('media'))
 
     photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
-    return render_template('media.html', post_form=post_form, photos=photos)
+    return render_template('media.html', title='Media', post_form=post_form, photos=photos)
 
 @app.route('/members')
 @login_required
+@verified_required
 def members():
     return ''
+
+@app.route('/verification', methods=['GET','POST'])
+@login_required
+def verification():
+    verification_form=VerificationForm()
+    if verification_form.validate_on_submit():
+        value = verification_form.choices.data
+        choices = dict(verification_form.choices.choices)
+        label = choices[value]
+        if label == 'Goup':
+            current_user.verified = 1
+            db.session.commit()
+            flash('You are now a verified user.')
+        else:
+            flash('Wrong answer. Please answer again.')
+        return redirect(url_for('verification'))
+
+
+
+    return render_template('verification.html', title='Verification',verification_form=verification_form)
 
 @app.route('/favicon.ico')
 def favicon():

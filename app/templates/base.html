@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% block title %} Goup {% endblock %}
+{% block title %} {% if title %} {{title}} {% else %} Goup {% endif %} {% endblock %}
 
 {% block navbar %}
 <nav class="navbar navbar-default">
@@ -21,11 +21,13 @@
       <ul class="nav navbar-nav">
 
         <li><a href="{{url_for('about')}}">About</a></li>
-
+        {% if current_user.verified == 1 %}
         <li><a href="{{url_for('discussion')}}">Discussion</a></li>
         <li><a href="{{url_for('media')}}">Media</a></li>
         <li><a href="#">Members</a></li>
-
+        {% elif current_user.verified != 1 and not current_user.is_anonymous %}
+        <li><a href="{{url_for('verification')}}">Verification</a></li>
+        {% endif %}
 
       </ul>
       <form class="navbar-form navbar-left">

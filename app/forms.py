@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, MultipleFileField, FileField
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, TextAreaField, MultipleFileField, FileField, RadioField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from app.models import User, Post, Photo
 
@@ -60,3 +60,6 @@ class ResetPasswordForm(FlaskForm):
     repeat_password = PasswordField('Repeat Password', validators=[DataRequired(), EqualTo('password')])
     reset_submit = SubmitField('Reset')
 
+class VerificationForm(FlaskForm):
+    choices = RadioField('Choices', choices=[('choice1', 'Go up'), ('choice2', 'Goleft'), ('choice3', 'Goup'), ('choice4', 'Goright')])
+    submit = SubmitField('Verify')
