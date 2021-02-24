@@ -150,7 +150,7 @@ def discussion():
 @app.route('/media', methods=['GET','POST'])
 @login_required
 def media():
-    # fix photo upload form in media
+    # fix display to not show profile pictures
     post_form = PostForm()
     if post_form.validate_on_submit():
         if not (request.files['files'].filename!='' or post_form.post.data):
@@ -171,9 +171,11 @@ def media():
                     return redirect(url_for('media'))
 
     photos = Photo.query.order_by(Photo.timestamp.desc()).all()
-    user = User.query.filter_by(username=current_user.username).first()
 
-    return render_template('media.html', post_form=post_form, photos=photos, user=user)
+    print(photos)
+
+
+    return render_template('media.html', post_form=post_form, photos=photos)
 
 @app.route('/members')
 @login_required
