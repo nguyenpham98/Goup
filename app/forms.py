@@ -61,5 +61,10 @@ class ResetPasswordForm(FlaskForm):
     reset_submit = SubmitField('Reset')
 
 class VerificationForm(FlaskForm):
-    choices = RadioField('Choices', choices=[('choice1', 'Go up'), ('choice2', 'Goleft'), ('choice3', 'Goup'), ('choice4', 'Goright')])
+    choices1 = RadioField('What is the name of the platform?', choices=[('choice1', 'Go up'), ('choice2', 'Goleft'), ('choice3', 'Goup'), ('choice4', 'Goright')])
+    choices2 = RadioField('What is 1+1=?', choices=[('choice1', '2'), ('choice2', '4'), ('choice3', '5'), ('choice4', '0')])
+    choices3 = RadioField('What is the capital of USA?', choices=[('choice1', 'California'), ('choice2', 'Washington D.C'), ('choice3', 'New York'), ('choice4', 'Chicago')])
     submit = SubmitField('Verify')
+
+class DeleteForm(FlaskForm):
+    delete_submit = SubmitField('Delete')

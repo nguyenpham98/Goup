@@ -2,7 +2,7 @@ from app import app, db, images, avatars
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, DeleteForm
 from app.models import User, Post, Photo
 import os
 from app.email import send_password_reset_email
@@ -22,6 +22,7 @@ def verified_required(f):
         if current_user.verified != 1:
             flash('You are not a verified user yet.')
             return redirect(url_for('verification'))
+
         return f(*args, **kwargs)
     return decorated_function
 
@@ -194,19 +195,30 @@ def members():
 
 @app.route('/verification', methods=['GET','POST'])
 @login_required
+
 def verification():
     verification_form=VerificationForm()
     if verification_form.validate_on_submit():
-        value = verification_form.choices.data
-        choices = dict(verification_form.choices.choices)
-        label = choices[value]
-        if label == 'Goup':
+        value = verification_form.choices1.data
+        choices = dict(verification_form.choices1.choices)
+        label1 = choices[value]
+
+        value = verification_form.choices2.data
+        choices = dict(verification_form.choices2.choices)
+        label2 = choices[value]
+
+        value = verification_form.choices3.data
+        choices = dict(verification_form.choices3.choices)
+        label3 = choices[value]
+
+        if label1 == 'Goup' and label2=='2' and label3=='Washington D.C':
             current_user.verified = 1
             db.session.commit()
             flash('You are now a verified user.')
         else:
-            flash('Wrong answer. Please answer again.')
-        return redirect(url_for('verification'))
+            flash('Wrong answer(s). Please answer again.')
+            return redirect(url_for('verification'))
+        return redirect(url_for('discussion'))
     return render_template('verification.html', title='Verification',verification_form=verification_form)
 
 @app.route('/favicon.ico')
