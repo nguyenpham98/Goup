@@ -157,14 +157,13 @@ def discussion():
     posts = Post.query.filter(Post.body != 'Profile Picture Changed').order_by(Post.timestamp.desc()).all()
     photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
 
-
     return render_template('discussion.html', title='Discussion', posts=posts, post_form=post_form, photos=photos)
 
 @app.route('/media', methods=['GET','POST'])
 @login_required
 @verified_required
 def media():
-    # fix display to not show profile pictures
+
     post_form = PostForm()
     if post_form.validate_on_submit():
         if not (request.files['files'].filename!='' or post_form.post.data):
@@ -184,7 +183,9 @@ def media():
                     flash('File Format Not Allowed.')
                     return redirect(url_for('media'))
 
+
     photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
+
     return render_template('media.html', title='Media', post_form=post_form, photos=photos)
 
 @app.route('/members')
@@ -195,7 +196,6 @@ def members():
 
 @app.route('/verification', methods=['GET','POST'])
 @login_required
-
 def verification():
     verification_form=VerificationForm()
     if verification_form.validate_on_submit():
@@ -220,6 +220,59 @@ def verification():
             return redirect(url_for('verification'))
         return redirect(url_for('discussion'))
     return render_template('verification.html', title='Verification',verification_form=verification_form)
+
+@app.route('/delete-post/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def delete_post(id):
+    post = Post.query.filter_by(id=id).first()
+    photos = Photo.query.filter(Photo.post_id==id).all()
+    for photo in photos:
+        db.session.delete(photo)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Post deleted.')
+    return redirect(url_for('discussion'))
+
+@app.route('/edit/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def edit_post(id):
+    post = Post.query.filter_by(id=id).first()
+    post_form = PostForm()
+    if post_form.validate_on_submit():
+        post.body = post_form.post.data
+        if request.files['files'].filename != '':
+            for file in post_form.files.data:
+                try:
+                    filename = images.save(file)
+                    photo = Photo(filename=filename, post=post, public=1)
+                    db.session.add(photo)
+                    db.session.commit()
+                    flash('Photo(s) Uploaded')
+                    return redirect(url_for('edit_post', id=id))
+                except UploadNotAllowed:
+                    flash('File Format Not Allowed.')
+                    return redirect(url_for('edit_post', id=id))
+
+        db.session.commit()
+        flash('Post edited successfully.')
+        return redirect(url_for('discussion'))
+    elif request.method=='GET':
+        post_form.post.data=post.body
+    photos = Photo.query.filter_by(post_id=post.id).order_by(Photo.timestamp.desc()).all()
+    return render_template('edit_post.html', title='Edit Post', post_form=post_form, photos=photos)
+
+@app.route('/delete-photo/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def delete_photo(id):
+    photo = Photo.query.filter(Photo.id==id).first()
+    post_id = photo.post_id
+    db.session.delete(photo)
+    db.session.commit()
+    flash('Photo deleted.')
+    return redirect(url_for('edit_post', id=post_id))
 
 @app.route('/favicon.ico')
 def favicon():

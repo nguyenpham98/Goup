@@ -21,22 +21,22 @@
     </div>
     <hr>
         {% for post in posts %}
-            {% if user.profile_picture %}
-                <img src="{{ url_for('static', filename='uploads/images/'+user.profile_picture)  }}" class="img-responsive" width="80">&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}<br><br>
-        &emsp;
-            {% else %}
 
-                <img src="{{ avatars.default(size='s') }}">&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}.<br><br>
-            {% endif %}
-            &emsp;{{post.body}}<br>
-            {% for photo in photos %}
-                {% if post.id == photo.post.id %}
-    <div class="container" align="center">
-        <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="350"></a><br>
-    </div>
-        {% endif %}
-            {% endfor %}
-        <br>
+    <img src="{{ url_for('static', filename='uploads/images/'+user.profile_picture)  }}" class="img-responsive" width="80" style="display:inline;"><h4 style="display:inline;">&emsp;<a href="{{url_for('profile', username=post.author.username)}}">{{post.author.username}}</a> posted an update {{ moment(post.timestamp).fromNow() }}</h4><br><br>        &emsp;
+
+            &emsp;<p>{{post.body}}</p><br>
+                    {% for photo in photos %}
+                        {% if post.id == photo.post.id %}
+            <div class="container" align="center">
+                <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="350"></a><br>
+            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                {% if current_user.username == post.author.username %}
+                    <a href="{{url_for('delete', id=post.id)}}"><button type="button" class="btn btn-danger">Delete</button></a>
+                {% endif %}
+        <hr>
         {% endfor %}
 
 </div>

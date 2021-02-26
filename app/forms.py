@@ -68,3 +68,6 @@ class VerificationForm(FlaskForm):
 
 class DeleteForm(FlaskForm):
     delete_submit = SubmitField('Delete')
+
+class EditPost(FlaskForm):
+    edit_submit = SubmitField('Edit')
