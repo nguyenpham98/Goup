@@ -1,9 +1,9 @@
-from app import app, db, images, avatars
+from app import app, db, images, clips
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, DeleteForm
-from app.models import User, Post, Photo
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm
+from app.models import User, Post, Photo, Video
 import os
 from app.email import send_password_reset_email
 from datetime import datetime
@@ -156,8 +156,9 @@ def discussion():
 
     posts = Post.query.filter(Post.body != 'Profile Picture Changed').order_by(Post.timestamp.desc()).all()
     photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
+    videos = Video.query.order_by(Video.timestamp.desc()).all()
 
-    return render_template('discussion.html', title='Discussion', posts=posts, post_form=post_form, photos=photos)
+    return render_template('discussion.html', title='Discussion', posts=posts, post_form=post_form, photos=photos, videos=videos)
 
 @app.route('/media', methods=['GET','POST'])
 @login_required
@@ -166,18 +167,20 @@ def media():
 
     post_form = PostForm()
     if post_form.validate_on_submit():
+
         if not (request.files['files'].filename!='' or post_form.post.data):
             flash('At least one field must have a value.')
             return redirect(url_for('media'))
         else:
             post = Post(body='',author=current_user)
             for file in post_form.files.data:
+
                 try:
                     filename = images.save(file)
                     photo = Photo(filename=filename, post=post, public=1)
                     db.session.add(photo)
                     db.session.commit()
-                    flash('Photo(s) Uploaded')
+                    flash('Photo(s) Uploaded.')
                     return redirect(url_for('media'))
                 except UploadNotAllowed:
                     flash('File Format Not Allowed.')
@@ -187,6 +190,30 @@ def media():
     photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
 
     return render_template('media.html', title='Media', post_form=post_form, photos=photos)
+
+
+@app.route('/video', methods=['GET','POST'])
+@login_required
+@verified_required
+def video():
+    video_form = VideoForm()
+    if video_form.validate_on_submit():
+        post=Post(body=video_form.title.data, author=current_user)
+        for file in video_form.files.data:
+            try:
+
+                filename = clips.save(file)
+                video = Video(title=video_form.title.data, filename=filename, post=post)
+                db.session.add(video)
+                db.session.commit()
+                flash('Video Uploaded.')
+                return redirect(url_for('video'))
+            except UploadNotAllowed:
+                flash('File Format Not Allowed.')
+                return redirect(url_for('video'))
+    videos = Video.query.order_by(Video.timestamp.desc()).all()
+    return render_template('video.html', title='Videos', videos=videos, video_form=video_form)
+
 
 @app.route('/members')
 @login_required

@@ -24,8 +24,17 @@
             <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="350" ></a><br>
         </div>
                 {% endif %}
-
             {% endfor %}
+            <!--- fix: edit video title, edit each photo title, delete video --->
+            {% for video in videos %}
+                {% if post.id == video.post.id %}
+                    <p>{{video.title}}</p>
+                    <video width="1100" height="500" controls>
+                        <source src="{{url_for('static', filename='uploads/videos/'+ video.filename)}}" type="video/mp4">
+                    </video>
+                {% endif %}
+            {% endfor %}
+
         {% if current_user.username == post.author.username %}
             <a href="{{url_for('delete_post', id=post.id)}}"><button type="button" class="btn btn-danger">Delete</button></a>
             <a href="{{url_for('edit_post', id=post.id)}}"><button type="button" class="btn btn-primary">Edit</button></a>

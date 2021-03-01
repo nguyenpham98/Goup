@@ -13,7 +13,7 @@
 
     {% for photo in photos %}
     <div class="container" align="center">
-        <a href="{{url_for('profile', username=photo.post.author)}}"><img src="{{ url_for('static', filename='uploads/images/'+photo.post.author.profile_picture)  }}" class="img-responsive" width="64" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=photo.post.author.username)}}">{{photo.post.author}}</a></h4><br><br>
+        <a href="{{url_for('profile', username=photo.post.author)}}"><img src="{{ url_for('static', filename='uploads/images/'+photo.post.author.profile_picture)  }}" class="img-responsive" width="64" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=photo.post.author.username)}}">{{photo.post.author}}</a> uploaded photo(s) {{ moment(photo.timestamp).fromNow() }}</h4><br><br>
 
         <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="600"></a><br>
 

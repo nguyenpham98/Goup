@@ -51,6 +51,11 @@ class PostForm(FlaskForm):
     files = MultipleFileField('Upload Photos', validators=[Optional()])
     post_submit = SubmitField('Post')
 
+class VideoForm(FlaskForm):
+    title = TextAreaField("Video title", validators=[DataRequired(), Length(min=1, max=100)])
+    files = MultipleFileField('Upload Video', validators=[DataRequired()])
+    video_submit = SubmitField('Upload')
+
 class ResetPasswordRequestForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired()])
     submit = SubmitField('Reset Password Request')
@@ -65,9 +70,6 @@ class VerificationForm(FlaskForm):
     choices2 = RadioField('What is 1+1=?', choices=[('choice1', '2'), ('choice2', '4'), ('choice3', '5'), ('choice4', '0')])
     choices3 = RadioField('What is the capital of USA?', choices=[('choice1', 'California'), ('choice2', 'Washington D.C'), ('choice3', 'New York'), ('choice4', 'Chicago')])
     submit = SubmitField('Verify')
-
-class DeleteForm(FlaskForm):
-    delete_submit = SubmitField('Delete')
 
 class EditPost(FlaskForm):
     edit_submit = SubmitField('Edit')

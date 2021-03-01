@@ -9,15 +9,17 @@ import logging
 from logging.handlers import SMTPHandler
 from flask_mail import Mail
 from flask_moment import Moment
-from flask_uploads import configure_uploads, IMAGES, UploadSet, UploadNotAllowed
-from sqlalchemy import MetaData
+from flask_uploads import configure_uploads, IMAGES, ALL, UploadSet
+
 
 
 app = Flask(__name__)
 app.config.from_object(Config)
 
 images = UploadSet('images', IMAGES)
-configure_uploads(app,images)
+clips = UploadSet('videos', extensions=('mp4'))
+configure_uploads(app,(images,clips))
+
 
 bootstrap = Bootstrap(app)
 

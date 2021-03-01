@@ -51,12 +51,14 @@ class Post(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     photos = db.relationship('Photo', backref='post', lazy='dynamic')
+    videos = db.relationship('Video', backref='post', lazy='dynamic')
 
     def __repr__(self):
         return '{}'.format(self.body)
 
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(140), index=True, default='')
     filename = db.Column(db.String(140), index=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     public = db.Column(db.Integer, index=True)
@@ -65,6 +67,15 @@ class Photo(db.Model):
     def __repr__(self):
         return '{}'.format(self.filename)
 
+class Video(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    filename = db.Column(db.String(140), index=True)
+    title = db.Column(db.String(140), index=True)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+
+    def __repr__(self):
+        return '{}'.format(self.filename)
 
 @login.user_loader
 def load_user(id):
