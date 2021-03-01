@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container">
+    <h3>Answer the following three questions correctly to be verified.</h3>
+    <hr>
+    <form method="POST" action="" >
+        {{ verification_form.hidden_tag() }}
+
+        {{ verification_form.choices1.label }}
+        {{ wtf.form_field(verification_form.choices1) }}
+
+        {{ verification_form.choices2.label }}
+        {{ wtf.form_field(verification_form.choices2) }}
+
+        {{ verification_form.choices3.label }}
+        {{ wtf.form_field(verification_form.choices3) }}
+
+        {{ wtf.form_field(verification_form.submit) }}
+    </form>
+
+
+
+</div>
+{% endblock %}

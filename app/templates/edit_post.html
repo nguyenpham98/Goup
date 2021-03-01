@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+
+<div class="container">
+
+    <h1>{{title}}</h1>
+
+    <form method="POST" action="" enctype="multipart/form-data">
+        {{ wtf.quick_form(post_form) }}
+    </form>
+    {% for photo in photos %}
+        <div class="container" align="center">
+            <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="350"></a><br>
+            {% if current_user.username==photo.post.author.username %}
+                <a href="{{url_for('delete_photo', id=photo.id)}}"><button type="button" class="btn btn-danger">Delete</button></a>
+            {% endif %}
+        </div>
+        <br>
+    {% endfor %}
+
+</div>
+
+{% endblock %}
