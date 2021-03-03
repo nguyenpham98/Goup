@@ -54,6 +54,10 @@ class PhotoTitleForm(FlaskForm):
     title = TextAreaField("Photo Title", validators=[DataRequired(), Length(min=1,max=1000)])
     title_submit = SubmitField('Update')
 
+class VideoTitleForm(FlaskForm):
+    title = TextAreaField("Video Title", validators=[DataRequired(), Length(min=1,max=1000)])
+    title_submit = SubmitField('Update')
+
 class CommentForm(FlaskForm):
     post = TextAreaField('Comment', validators=[DataRequired(), Length(min=1,max=1000)])
     comment_submit = SubmitField('Comment')

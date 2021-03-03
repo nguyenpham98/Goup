@@ -2,7 +2,7 @@ from app import app, db, images, clips
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm
+from app.forms import VideoTitleForm, PhotoTitleForm, LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm
 from app.models import User, Post, Photo, Video, Comment
 import os
 from app.email import send_password_reset_email
@@ -184,17 +184,28 @@ def like_photo_action(photo_id, action):
         db.session.commit()
     return redirect(request.referrer)
 
-
-
-@app.route('/media', methods=['GET','POST'])
+@app.route('/like-video/<int:video_id>/<action>')
 @login_required
 @verified_required
-def media():
+def like_video_action(video_id, action):
+    video = Video.query.filter_by(id=video_id).first_or_404()
+    if action == 'like':
+        current_user.like_video(video)
+        db.session.commit()
+    if action == 'unlike':
+        current_user.unlike_video(video)
+        db.session.commit()
+    return redirect(request.referrer)
+
+@app.route('/photos', methods=['GET','POST'])
+@login_required
+@verified_required
+def photos():
     photo_form = PhotoForm()
     if photo_form.validate_on_submit():
         if not (request.files['files'].filename!='' or photo_form.post.data):
             flash('At least one field must have a value.')
-            return redirect(url_for('media'))
+            return redirect(url_for('photos'))
         else:
             post = Post(body=photo_form.post.data,author=current_user)
             for file in photo_form.files.data:
@@ -204,13 +215,13 @@ def media():
                     db.session.add(photo)
                 except UploadNotAllowed:
                     flash('File Format Not Allowed.')
-                    return redirect(url_for('media'))
+                    return redirect(url_for('photos'))
             db.session.commit()
             flash('Photo(s) Uploaded.')
-            return redirect(url_for('media'))
+            return redirect(url_for('photos'))
 
     photos = Photo.query.filter(Photo.is_public==1).order_by(Photo.timestamp.desc()).all()
-    return render_template('media.html', title='Media', photo_form=photo_form, photos=photos)
+    return render_template('photos.html', title='Photos', photo_form=photo_form, photos=photos)
 
 @app.route('/photo/<id>', methods=['GET','POST'])
 @login_required
@@ -230,10 +241,10 @@ def photo(id):
     comments = Comment.query.filter(Comment.photo_id==photo.id).order_by(Comment.timestamp.desc()).all()
     return render_template('photo.html', title='Photo', photo=photo, comment_form=comment_form,comments=comments)
 
-@app.route('/video', methods=['GET','POST'])
+@app.route('/videos', methods=['GET','POST'])
 @login_required
 @verified_required
-def video():
+def videos():
     video_form = VideoForm()
     if video_form.validate_on_submit():
         post=Post(body=video_form.title.data, author=current_user)
@@ -244,13 +255,30 @@ def video():
                 db.session.add(video)
                 db.session.commit()
                 flash('Video Uploaded.')
-                return redirect(url_for('video'))
+                return redirect(url_for('videos'))
             except UploadNotAllowed:
                 flash('File Format Not Allowed.')
-                return redirect(url_for('video'))
+                return redirect(url_for('videos'))
     videos = Video.query.order_by(Video.timestamp.desc()).all()
-    return render_template('video.html', title='Videos', videos=videos, video_form=video_form)
+    return render_template('videos.html', title='Videos', videos=videos, video_form=video_form)
 
+@app.route('/video/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def video(id):
+    comment_form=CommentForm()
+    if comment_form.comment_submit.data and comment_form.validate_on_submit():
+        video_id=request.form.get("video_id","")
+        video=Video.query.filter_by(id=video_id).first()
+        comment = Comment(author=current_user, body=comment_form.post.data, video=video)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Commented')
+        return redirect(request.referrer)
+    video = Video.query.filter_by(id=id).first()
+
+    comments = Comment.query.filter(Comment.video_id==video.id).order_by(Comment.timestamp.desc()).all()
+    return render_template('video.html', title='Video', video=video, comment_form=comment_form,comments=comments)
 
 @app.route('/members')
 @login_required
@@ -333,7 +361,32 @@ def delete_photo(id):
     db.session.delete(photo)
     db.session.commit()
     flash('Photo deleted.')
-    return redirect(url_for('media'))
+    return redirect(url_for('photos'))
+
+@app.route('/edit-video/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def edit_video(id):
+    video = Video.query.filter_by(id=id).first()
+    video_title_form = VideoTitleForm()
+    if video_title_form.validate_on_submit():
+        video.title = video_title_form.title.data
+        db.session.commit()
+        flash('Video edited successfully.')
+        return redirect(url_for('video',id=video.id))
+    elif request.method=='GET':
+        video_title_form.title.data=video.title
+    return render_template('edit_video.html', title='Edit Video', video_title_form=video_title_form)
+
+@app.route('/delete-video/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def delete_video(id):
+    video = Video.query.filter_by(id=id).first()
+    db.session.delete(video)
+    db.session.commit()
+    flash('Video deleted.')
+    return redirect(url_for('videos'))
 
 @app.route('/favicon.ico')
 def favicon():

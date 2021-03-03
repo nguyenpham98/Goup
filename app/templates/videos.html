@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+<div class="container">
+
+    <form method="POST" action="" enctype="multipart/form-data">
+        {{wtf.quick_form(video_form)}}
+    </form>
+    <br>
+
+    {% for video in videos %}
+        <div class="container" align="center">
+            <a href="{{url_for('profile', username=video.post.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+video.post.author.profile_picture)  }}" class="img-responsive" width="64" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=video.post.author.username)}}">{{video.post.author}}</a> uploaded a video {{ moment(video.timestamp).fromNow() }}</h4><br><br>
+        </div>
+        <p>{{video.title}}</p>
+
+        <video width="1100" height="500" controls>
+            <source src="{{url_for('static', filename='uploads/videos/'+ video.filename)}}" type="video/mp4">
+        </video>
+        <br>
+        {{ video.likes.count() }} likes and {{ video.comments.count() }} comments <br>
+        <a href="{{url_for('video',id=video.id)}}">See Full Post</a>
+
+        <hr>
+    {% endfor %}
+
+
+
+</div>
+{% endblock %}

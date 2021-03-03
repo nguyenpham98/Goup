@@ -1,29 +1,50 @@
 {% extends 'base.html' %}
 {% import 'bootstrap/wtf.html' as wtf %}
 
+{% block title %} {% if title %} {{title}} {% else %} Goup {% endif %} {% endblock %}
+
+
 {% block app_content %}
 <div class="container">
 
-    <form method="POST" action="" enctype="multipart/form-data">
-        {{wtf.quick_form(video_form)}}
-    </form>
-    <br>
 
-    {% for video in videos %}
-        <div class="container" align="center">
-            <a href="{{url_for('profile', username=video.post.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+video.post.author.profile_picture)  }}" class="img-responsive" width="64" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=video.post.author.username)}}">{{video.post.author}}</a> uploaded a video {{ moment(video.timestamp).fromNow() }}</h4><br><br>
-        </div>
-        <p>{{video.title}}</p>
 
-        <video width="1100" height="500" controls>
+        <a href="{{url_for('profile', username=video.post.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+video.post.author.profile_picture)  }}" class="img-responsive" width="90" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=video.post.author.username)}}">{{video.post.author.username}}</a> posted an update {{ moment(video.timestamp).fromNow() }}</h4><br><br>
+            &emsp;<p>{{video.title}}</p>
+         <video width="1100" height="500" controls>
             <source src="{{url_for('static', filename='uploads/videos/'+ video.filename)}}" type="video/mp4">
         </video>
-        {% if current_user.username == video.post.author.username %}
+        <br>
+        {% if current_user.has_liked_video(video) %}
+    <a href="{{ url_for('like_video_action', video_id=video.id, action='unlike') }}"><span style="font-size:20px;">&#128078;</span></a>
+            {% else %}
+    <a href="{{ url_for('like_video_action', video_id=video.id, action='like') }}"><span style="font-size:20px;">&#128077;</span></a>
+            {% endif %}
+            <br>
 
-            <a href="{{url_for('delete_post', id=video.post_id)}}"><button type="button" class="btn btn-danger">Delete</button></a>
-        {% endif %}
-        <hr>
-    {% endfor %}
+
+            {{ video.likes.count() }} likes<br>
+            {{ video.comments.count() }} comments <br>
+
+            {% if current_user.username == video.post.author.username %}
+                <a href="{{url_for('delete_video', id=video.id)}}"><button type="button" class="btn btn-danger">Delete</button></a>
+                <a href="{{url_for('edit_video', id=video.id)}}"><button type="button" class="btn btn-primary">Edit</button></a>
+
+            {% endif %}
+
+
+
+            <br><br>
+            {% for comment in comments %}
+                    <a href="{{url_for('profile', username=comment.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+comment.author.profile_picture)  }}" class="img-responsive" width="20" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=comment.author.username)}}">{{comment.author.username}}</a></h4>: {{comment.body}}<br>
+            {% endfor %}
+
+            <form method="POST" action="" enctype="multipart/form-data"  >
+                <input type="hidden" value="{{video.id}}" name="video_id" >
+                {{wtf.quick_form(comment_form)}}
+            </form>
+
+
 
 
 

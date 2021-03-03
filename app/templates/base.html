@@ -23,8 +23,8 @@
         <li><a href="{{url_for('about')}}">About</a></li>
         {% if current_user.verified == 1 %}
         <li><a href="{{url_for('discussion')}}">Discussion</a></li>
-        <li><a href="{{url_for('media')}}">Media</a></li>
-        <li><a href="{{url_for('video')}}">Video</a></li>
+        <li><a href="{{url_for('photos')}}">Photos</a></li>
+        <li><a href="{{url_for('videos')}}">Videos</a></li>
         <li><a href="#">Members</a></li>
         {% elif current_user.verified != 1 and not current_user.is_anonymous %}
         <li><a href="{{url_for('verification')}}">Verification</a></li>

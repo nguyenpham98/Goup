@@ -54,6 +54,22 @@ class User(UserMixin, db.Model):
             PostLike.user_id == self.id,
             PostLike.photo_id == photo.id).count() > 0
 
+    def like_video(self, video):
+        if not self.has_liked_video(video):
+            like = PostLike(user_id=self.id, video_id=video.id)
+            db.session.add(like)
+
+    def unlike_video(self, video):
+        if self.has_liked_post(video):
+            PostLike.query.filter_by(
+                user_id=self.id,
+                video_id=video.id).delete()
+
+    def has_liked_video(self, video):
+        return PostLike.query.filter(
+            PostLike.user_id == self.id,
+            PostLike.video_id == video.id).count() > 0
+
     def __repr__(self):
         return '{}'.format(self.username)
 
@@ -101,6 +117,7 @@ class PostLike(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     photo_id = db.Column(db.Integer, db.ForeignKey('photo.id'))
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'))
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -109,6 +126,7 @@ class Comment(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
     photo_id = db.Column(db.Integer, db.ForeignKey('photo.id'))
+    video_id = db.Column(db.Integer, db.ForeignKey('video.id'))
 
 class Photo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -129,6 +147,9 @@ class Video(db.Model):
     title = db.Column(db.String(140), index=True)
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'))
+    likes = db.relationship('PostLike', backref='video', lazy='dynamic')
+    comments = db.relationship('Comment', backref='video', lazy='dynamic')
+
 
     def __repr__(self):
         return '{}'.format(self.filename)
