@@ -2,8 +2,8 @@ from app import app, db, images, clips
 from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm
-from app.models import User, Post, Photo, Video
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm
+from app.models import User, Post, Photo, Video, Comment
 import os
 from app.email import send_password_reset_email
 from datetime import datetime
@@ -110,11 +110,11 @@ def edit_profile_picture():
     edit_profile_picture_form = EditProfilePictureForm()
     if edit_profile_picture_form.validate_on_submit():
 
-        post = Post(body='Profile Picture Changed',author=current_user)
+        post = Post(body='',author=current_user)
         try:
             filename = images.save(edit_profile_picture_form.photo.data, folder='profile/'+current_user.username)
             current_user.profile_picture = filename
-            photo = Photo(filename=filename, post=post, public=0)
+            photo = Photo(filename=filename, post=post, is_public=0)
             db.session.add(photo)
         except UploadNotAllowed:
             flash('File Format Not Allowed.')
@@ -132,65 +132,103 @@ def edit_profile_picture():
 @verified_required
 def discussion():
     post_form=PostForm()
-
     if post_form.post_submit.data and post_form.validate_on_submit():
-        if not (request.files['files'].filename!='' or post_form.post.data):
-            flash('At least one field must have a value.')
-            return redirect(url_for('discussion'))
-        else:
-            post = Post(body=post_form.post.data, author=current_user)
-            if request.files['files'].filename!='': # photo is optional. Check if file requested in form is not blank
-                for file in post_form.files.data:
-                    try:
-                        filename = images.save(file)
-                        photo = Photo(filename=filename, post=post, public=1)
-                        db.session.add(photo)
-                    except UploadNotAllowed:
-                        flash('File Format Not Allowed.')
-                        return redirect(url_for('discussion'))
+        post = Post(body=post_form.post.data,author=current_user, is_discussion=1)
+        db.session.add(post)
+        db.session.commit()
+        flash('Posted successfully!')
+        return redirect(url_for('discussion'))
+    posts = Post.query.filter(Post.is_discussion==1).order_by(Post.timestamp.desc()).all()
+    return render_template('discussion.html', title='Discussion', posts=posts, post_form=post_form)
 
-            db.session.add(post)
-            db.session.commit()
-            flash('Your post is now live!')
-            return redirect(url_for('discussion'))
+@app.route('/post/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def post(id):
+    comment_form=CommentForm()
+    if comment_form.comment_submit.data and comment_form.validate_on_submit():
+        post_id=request.form.get("post_id","")
+        post=Post.query.filter_by(id=post_id).first()
+        comment = Comment(author=current_user, body=comment_form.post.data, post=post)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Commented')
+        return redirect(request.referrer)
+    post = Post.query.filter_by(id=id).first()
+    comments = Comment.query.filter(Comment.post_id==id).order_by(Comment.timestamp.desc()).all()
+    return render_template('post.html', title='Post', post=post, comment_form=comment_form,comments=comments)
 
-    posts = Post.query.filter(Post.body != 'Profile Picture Changed').order_by(Post.timestamp.desc()).all()
-    photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
-    videos = Video.query.order_by(Video.timestamp.desc()).all()
+@app.route('/like-post/<int:post_id>/<action>')
+@login_required
+@verified_required
+def like_post_action(post_id, action):
+    post = Post.query.filter_by(id=post_id).first_or_404()
+    if action == 'like':
+        current_user.like_post(post)
+        db.session.commit()
+    if action == 'unlike':
+        current_user.unlike_post(post)
+        db.session.commit()
+    return redirect(request.referrer)
 
-    return render_template('discussion.html', title='Discussion', posts=posts, post_form=post_form, photos=photos, videos=videos)
+@app.route('/like-photo/<int:photo_id>/<action>')
+@login_required
+@verified_required
+def like_photo_action(photo_id, action):
+    photo = Photo.query.filter_by(id=photo_id).first_or_404()
+    if action == 'like':
+        current_user.like_photo(photo)
+        db.session.commit()
+    if action == 'unlike':
+        current_user.unlike_photo(photo)
+        db.session.commit()
+    return redirect(request.referrer)
+
+
 
 @app.route('/media', methods=['GET','POST'])
 @login_required
 @verified_required
 def media():
-
-    post_form = PostForm()
-    if post_form.validate_on_submit():
-
-        if not (request.files['files'].filename!='' or post_form.post.data):
+    photo_form = PhotoForm()
+    if photo_form.validate_on_submit():
+        if not (request.files['files'].filename!='' or photo_form.post.data):
             flash('At least one field must have a value.')
             return redirect(url_for('media'))
         else:
-            post = Post(body='',author=current_user)
-            for file in post_form.files.data:
-
+            post = Post(body=photo_form.post.data,author=current_user)
+            for file in photo_form.files.data:
                 try:
                     filename = images.save(file)
-                    photo = Photo(filename=filename, post=post, public=1)
+                    photo = Photo(filename=filename, title=photo_form.post.data, post=post, is_public=1)
                     db.session.add(photo)
-                    db.session.commit()
-                    flash('Photo(s) Uploaded.')
-                    return redirect(url_for('media'))
                 except UploadNotAllowed:
                     flash('File Format Not Allowed.')
                     return redirect(url_for('media'))
+            db.session.commit()
+            flash('Photo(s) Uploaded.')
+            return redirect(url_for('media'))
 
+    photos = Photo.query.filter(Photo.is_public==1).order_by(Photo.timestamp.desc()).all()
+    return render_template('media.html', title='Media', photo_form=photo_form, photos=photos)
 
-    photos = Photo.query.filter(Photo.public==1).order_by(Photo.timestamp.desc()).all()
+@app.route('/photo/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def photo(id):
+    comment_form=CommentForm()
+    if comment_form.comment_submit.data and comment_form.validate_on_submit():
+        photo_id=request.form.get("photo_id","")
+        photo=Photo.query.filter_by(id=photo_id).first()
+        comment = Comment(author=current_user, body=comment_form.post.data, photo=photo)
+        db.session.add(comment)
+        db.session.commit()
+        flash('Commented')
+        return redirect(request.referrer)
+    photo = Photo.query.filter_by(id=id).first()
 
-    return render_template('media.html', title='Media', post_form=post_form, photos=photos)
-
+    comments = Comment.query.filter(Comment.photo_id==photo.id).order_by(Comment.timestamp.desc()).all()
+    return render_template('photo.html', title='Photo', photo=photo, comment_form=comment_form,comments=comments)
 
 @app.route('/video', methods=['GET','POST'])
 @login_required
@@ -201,7 +239,6 @@ def video():
         post=Post(body=video_form.title.data, author=current_user)
         for file in video_form.files.data:
             try:
-
                 filename = clips.save(file)
                 video = Video(title=video_form.title.data, filename=filename, post=post)
                 db.session.add(video)
@@ -253,15 +290,12 @@ def verification():
 @verified_required
 def delete_post(id):
     post = Post.query.filter_by(id=id).first()
-    photos = Photo.query.filter(Photo.post_id==id).all()
-    for photo in photos:
-        db.session.delete(photo)
     db.session.delete(post)
     db.session.commit()
     flash('Post deleted.')
     return redirect(url_for('discussion'))
 
-@app.route('/edit/<id>', methods=['GET','POST'])
+@app.route('/edit-post/<id>', methods=['GET','POST'])
 @login_required
 @verified_required
 def edit_post(id):
@@ -269,37 +303,37 @@ def edit_post(id):
     post_form = PostForm()
     if post_form.validate_on_submit():
         post.body = post_form.post.data
-        if request.files['files'].filename != '':
-            for file in post_form.files.data:
-                try:
-                    filename = images.save(file)
-                    photo = Photo(filename=filename, post=post, public=1)
-                    db.session.add(photo)
-                    db.session.commit()
-                    flash('Photo(s) Uploaded')
-                    return redirect(url_for('edit_post', id=id))
-                except UploadNotAllowed:
-                    flash('File Format Not Allowed.')
-                    return redirect(url_for('edit_post', id=id))
-
         db.session.commit()
         flash('Post edited successfully.')
-        return redirect(url_for('discussion'))
+        return redirect(url_for('post',id=id))
     elif request.method=='GET':
         post_form.post.data=post.body
-    photos = Photo.query.filter_by(post_id=post.id).order_by(Photo.timestamp.desc()).all()
-    return render_template('edit_post.html', title='Edit Post', post_form=post_form, photos=photos)
+    return render_template('edit_post.html', title='Edit Post', post_form=post_form)
+
+@app.route('/edit-photo/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def edit_photo(id):
+    photo = Photo.query.filter_by(id=id).first()
+    photo_title_form = PhotoTitleForm()
+    if photo_title_form.validate_on_submit():
+        photo.title = photo_title_form.title.data
+        db.session.commit()
+        flash('Photo edited successfully.')
+        return redirect(url_for('photo',id=photo.id))
+    elif request.method=='GET':
+        photo_title_form.title.data=photo.title
+    return render_template('edit_photo.html', title='Edit Photo', photo_title_form=photo_title_form)
 
 @app.route('/delete-photo/<id>', methods=['GET','POST'])
 @login_required
 @verified_required
 def delete_photo(id):
-    photo = Photo.query.filter(Photo.id==id).first()
-    post_id = photo.post_id
+    photo = Photo.query.filter_by(id=id).first()
     db.session.delete(photo)
     db.session.commit()
     flash('Photo deleted.')
-    return redirect(url_for('edit_post', id=post_id))
+    return redirect(url_for('media'))
 
 @app.route('/favicon.ico')
 def favicon():

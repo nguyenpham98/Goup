@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block title %} {% if title %} {{title}} {% else %} Goup {% endif %} {% endblock %}
+
+
+{% block app_content %}
+<div class="container">
+
+
+
+        <a href="{{url_for('profile', username=photo.post.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+photo.post.author.profile_picture)  }}" class="img-responsive" width="90" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=photo.post.author.username)}}">{{photo.post.author.username}}</a> posted an update {{ moment(photo.timestamp).fromNow() }}</h4><br><br>
+            &emsp;<p>{{photo.title}}</p>
+            <a href="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}"><img class="img-responsive" src="{{ url_for('static', filename='uploads/images/'+ photo.filename) }}" width="600"></a><br>
+
+            {% if current_user.has_liked_photo(photo) %}
+    <a href="{{ url_for('like_photo_action', photo_id=photo.id, action='unlike') }}"><span style="font-size:20px;">&#128078;</span></a>
+            {% else %}
+    <a href="{{ url_for('like_photo_action', photo_id=photo.id, action='like') }}"><span style="font-size:20px;">&#128077;</span></a>
+            {% endif %}
+            <br>
+
+
+            {{ photo.likes.count() }} likes<br>
+            {{ photo.comments.count() }} comments <br>
+            {% if current_user.username == photo.post.author.username %}
+                <a href="{{url_for('delete_photo', id=photo.id)}}"><button type="button" class="btn btn-danger">Delete</button></a>
+                <a href="{{url_for('edit_photo', id=photo.id)}}"><button type="button" class="btn btn-primary">Edit</button></a>
+
+            {% endif %}
+            <br><br>
+            {% for comment in comments %}
+                    <a href="{{url_for('profile', username=comment.author.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+comment.author.profile_picture)  }}" class="img-responsive" width="20" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=comment.author.username)}}">{{comment.author.username}}</a></h4>: {{comment.body}}<br>
+            {% endfor %}
+
+            <form method="POST" action="" enctype="multipart/form-data"  >
+                <input type="hidden" value="{{photo.id}}" name="photo_id" >
+                {{wtf.quick_form(comment_form)}}
+            </form>
+
+
+
+
+
+</div>
+{% endblock %}
