@@ -50,6 +50,10 @@ class PostForm(FlaskForm):
     post = TextAreaField("What's on your mind?", validators=[DataRequired(), Length(min=1,max=1000)])
     post_submit = SubmitField('Post')
 
+class EditCommentForm(FlaskForm):
+    body = TextAreaField("Edit Comment", validators=[DataRequired(), Length(min=1,max=1000)])
+    title_submit = SubmitField('Update')
+
 class PhotoTitleForm(FlaskForm):
     title = TextAreaField("Photo Title", validators=[DataRequired(), Length(min=1,max=1000)])
     title_submit = SubmitField('Update')

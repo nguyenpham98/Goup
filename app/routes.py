@@ -1,10 +1,9 @@
 from app import app, db, images, clips
-from flask import render_template, request, redirect, url_for, flash, send_from_directory, current_app
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import VideoTitleForm, PhotoTitleForm, LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm
+from app.forms import VideoTitleForm, PhotoTitleForm, LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm, EditCommentForm
 from app.models import User, Post, Photo, Video, Comment
-import os
 from app.email import send_password_reset_email
 from datetime import datetime
 from flask_uploads import UploadNotAllowed
@@ -25,7 +24,6 @@ def verified_required(f):
 
         return f(*args, **kwargs)
     return decorated_function
-
 
 @app.route('/')
 def index():
@@ -84,11 +82,7 @@ def register():
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
 
-    posts = Post.query.filter_by(user_id=user.id).order_by(Post.timestamp.desc()).all()
-
-    photos = Photo.query.all()
-
-    return render_template('user.html', title=username, user=user, posts=posts, photos=photos)
+    return render_template('user.html', title=username, user=user)
 
 @app.route('/edit_profile', methods=['POST','GET'])
 @login_required
@@ -280,12 +274,6 @@ def video(id):
     comments = Comment.query.filter(Comment.video_id==video.id).order_by(Comment.timestamp.desc()).all()
     return render_template('video.html', title='Video', video=video, comment_form=comment_form,comments=comments)
 
-@app.route('/members')
-@login_required
-@verified_required
-def members():
-    return ''
-
 @app.route('/verification', methods=['GET','POST'])
 @login_required
 def verification():
@@ -329,14 +317,50 @@ def delete_post(id):
 def edit_post(id):
     post = Post.query.filter_by(id=id).first()
     post_form = PostForm()
+
     if post_form.validate_on_submit():
         post.body = post_form.post.data
         db.session.commit()
         flash('Post edited successfully.')
+
         return redirect(url_for('post',id=id))
     elif request.method=='GET':
         post_form.post.data=post.body
+
     return render_template('edit_post.html', title='Edit Post', post_form=post_form)
+
+@app.route('/delete-comment/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def delete_comment(id):
+    comment = Comment.query.filter_by(id=id).first()
+    db.session.delete(comment)
+    db.session.commit()
+    flash('Comment deleted.')
+    return redirect(request.referrer)
+
+@app.route('/edit-comment/<id>', methods=['GET','POST'])
+@login_required
+@verified_required
+def edit_comment(id):
+    comment = Comment.query.filter_by(id=id).first()
+    edit_comment_form = EditCommentForm()
+
+    if edit_comment_form.validate_on_submit():
+        comment.body = edit_comment_form.body.data
+        db.session.commit()
+        flash('Comment edited successfully.')
+        if comment.post_id:
+            return redirect(url_for('post', id=comment.post_id))
+        if comment.photo_id:
+            return redirect(url_for('photo', id=comment.photo_id))
+        if comment.video_id:
+            return redirect(url_for('video', id=comment.video_id))
+        return redirect(request.referrer)
+    elif request.method=='GET':
+        edit_comment_form.body.data=comment.body
+
+    return render_template('edit_comment.html', title='Edit Comment', edit_comment_form=edit_comment_form)
 
 @app.route('/edit-photo/<id>', methods=['GET','POST'])
 @login_required
@@ -387,6 +411,14 @@ def delete_video(id):
     db.session.commit()
     flash('Video deleted.')
     return redirect(url_for('videos'))
+
+@app.route('/members')
+@login_required
+@verified_required
+def members():
+    users = User.query.filter_by(verified=1).order_by(User.member_since.desc()).all()
+    return render_template('members.html', title='Members', users=users)
+
 
 @app.route('/favicon.ico')
 def favicon():

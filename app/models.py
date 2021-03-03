@@ -15,6 +15,7 @@ class User(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow())
     profile_picture = db.Column(db.String(140), index=True)
     verified = db.Column(db.Integer, index=True, default=0)
+    member_since = db.Column(db.DateTime, default=datetime.utcnow())
     posts = db.relationship('Post', backref='author', lazy='dynamic')
     comments = db.relationship('Comment', backref='author', lazy='dynamic')
     liked = db.relationship(
@@ -109,7 +110,7 @@ class Post(db.Model):
     likes = db.relationship('PostLike', backref='post', lazy='dynamic')
 
     def __repr__(self):
-        return '{}'.format(self.body)
+        return '{}'.format(self.timestamp)
 
 class PostLike(db.Model):
     __tablename__ = 'post_like'
@@ -139,7 +140,7 @@ class Photo(db.Model):
     comments = db.relationship('Comment', backref='photo', lazy='dynamic')
 
     def __repr__(self):
-        return '{}'.format(self.filename)
+        return '{}'.format(self.timestamp)
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -152,7 +153,7 @@ class Video(db.Model):
 
 
     def __repr__(self):
-        return '{}'.format(self.filename)
+        return '{}'.format(self.timestamp)
 
 
 

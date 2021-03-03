@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+
+{% block app_content %}
+<div class="container">
+
+    <div class="container" align="center">
+        <h3>Active Members</h3>
+        {% for user in users%}
+            <a href="{{url_for('profile', username=user.username)}}"><img src="{{ url_for('static', filename='uploads/images/'+user.profile_picture)  }}" class="img-responsive" width="90" style="display:inline;"></a>&emsp;<h4 style="display:inline;"><a href="{{url_for('profile', username=user.username)}}">{{user.username}}</a> joined since {{moment(user.member_since).format('LL')}}</h4><br><br>
+
+
+        {% endfor %}
+    </div>
+
+
+
+
+</div>
+{% endblock %}
