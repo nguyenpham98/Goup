@@ -91,5 +91,8 @@ class VerificationForm(FlaskForm):
     choices3 = RadioField('What is the capital of USA?', choices=[('choice1', 'California'), ('choice2', 'Washington D.C'), ('choice3', 'New York'), ('choice4', 'Chicago')])
     submit = SubmitField('Verify')
 
+class SearchForm(FlaskForm):
+    search = StringField('search', validators=[DataRequired()])
+
 class EditPost(FlaskForm):
     edit_submit = SubmitField('Edit')

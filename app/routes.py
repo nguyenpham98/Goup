@@ -2,12 +2,15 @@ from app import app, db, images, clips
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import current_user, login_user, logout_user, login_required
 from werkzeug.urls import url_parse
-from app.forms import VideoTitleForm, PhotoTitleForm, LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm, EditCommentForm
+from app.forms import VideoTitleForm, PhotoTitleForm, LoginForm, RegistrationForm, EditProfileForm, PostForm, ResetPasswordRequestForm, ResetPasswordForm, EditProfilePictureForm, VerificationForm, VideoForm, PhotoForm, CommentForm, EditCommentForm, SearchForm
 from app.models import User, Post, Photo, Video, Comment
 from app.email import send_password_reset_email
 from datetime import datetime
 from flask_uploads import UploadNotAllowed
 from functools import wraps
+import flask_whooshalchemy as whooshalchemy
+
+
 
 @app.before_request # insert code before view function
 def before_request():
@@ -32,6 +35,11 @@ def index():
 @app.route('/about')
 def about():
     return render_template('about.html', title='About')
+
+@app.route('/search')
+def search():
+    res = Post.query.whoosh_search('n')
+    return render_template('search.html', res)
 
 @app.route('/login', methods=['GET','POST'])
 def login():

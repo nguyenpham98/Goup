@@ -9,7 +9,7 @@ import logging
 from logging.handlers import SMTPHandler
 from flask_mail import Mail
 from flask_moment import Moment
-from flask_uploads import configure_uploads, IMAGES, ALL, UploadSet
+from flask_uploads import configure_uploads, IMAGES, UploadSet
 
 
 
@@ -57,6 +57,4 @@ if not app.debug:
 
 
 from app import routes, models, errors
-
-
 
